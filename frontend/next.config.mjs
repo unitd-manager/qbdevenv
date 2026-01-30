@@ -3,8 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
 
   // IMPORTANT for subfolder deployment
-  basePath: '/qbdev/backend',
-  assetPrefix: '/qbdev/backend/',
+
 
   images: {
     remotePatterns: [
