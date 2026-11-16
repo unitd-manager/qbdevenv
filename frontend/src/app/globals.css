@@ -51,7 +51,7 @@ a {
   transition: all 0.3s ease;
 }
 
-.dropdown-mega:hover .dropdown-menu {
+.dropdown-mega .dropdown-menu.show {
   visibility: visible;
   opacity: 1;
   display: block;
@@ -212,4 +212,42 @@ input[type="password"]::-ms-clear {
 
 .password-input {
   padding-right: 45px !important;
+}
+/* ===== Hide third-party chatbot widgets (remove this block to show them again) ===== */
+#hubspot-messages-iframe-container,
+#hs-web-interactives-top-anchor,
+.hs-messages-widget-open,
+#drift-widget-container, #drift-frame-controller, .drift-frame-chat, .drift-frame-controller,
+#tidio-chat, #tidio-chat-iframe,
+.intercom-lightweight-app, #intercom-container, .intercom-launcher, iframe[name="intercom-launcher-frame"],
+.crisp-client, #crisp-chatbox,
+.tawk-min-container, iframe[title*="chat" i][src*="tawk"],
+#chat-widget-container, #livechat-compact-container, #livechat-full,
+#launcher, iframe#launcher, #webWidget, iframe[title="Messaging window"],
+#fc_frame, #freshworks-container,
+#ze-snippet, .zEWidget-launcher,
+#chatbot, .chatbot, #chat-bot, .chat-bot, #chat-widget, .chat-widget,
+#botpress-webchat, .bpWebchat, #voiceflow-chat, .vfrc-widget, #chatbase-bubble-button, #chatbase-message-bubbles,
+[id*="chatbot" i]:not(body):not(html), [class*="chatbot-widget" i], [class*="chat-launcher" i], [id*="chat-launcher" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Chatbase chatbot: launcher button, chat window, popup message bubbles & notifications */
+#chatbase-bubble-button,
+#chatbase-bubble-window,
+#chatbase-message-bubbles,
+#chatbase-notification-container,
+[id^="chatbase-"],
+[class*="chatbase-"],
+[data-cb-notif-list],
+[data-cb-notif-list] ~ *,
+iframe[src*="chatbase.co"],
+iframe[title*="chatbase" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

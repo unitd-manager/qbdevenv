@@ -596,7 +596,7 @@ header.navbar .container {
   margin-bottom: 5px !important;
 }
 
-.primary-menu .dropdown-mega:hover .dropdown-menu {
+.primary-menu .dropdown-mega .dropdown-menu.show {
   visibility: visible;
   opacity: 1;
   display: block;

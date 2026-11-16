@@ -31,6 +31,58 @@ function Reveal({ children, className = '' }) {
   );
 }
 
+/* Auto-trims empty (transparent / white) margins around a logo so every logo
+   fills the hero pill. If the image host blocks canvas access (no CORS header)
+   it silently falls back to the original image. */
+function TrimmedLogo({ src, alt }) {
+  const [out, setOut] = useState(src);
+
+  useEffect(() => {
+    setOut(src);
+    if (!src) return;
+    let cancelled = false;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight;
+        if (!W || !H) return;
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const { data } = ctx.getImageData(0, 0, W, H); // throws if tainted
+        let x0 = W, y0 = H, x1 = -1, y1 = -1;
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const i = (y * W + x) * 4;
+            const a = data[i + 3];
+            const nearWhite = data[i] > 245 && data[i + 1] > 245 && data[i + 2] > 245;
+            if (a > 20 && !nearWhite) {
+              if (x < x0) x0 = x;
+              if (x > x1) x1 = x;
+              if (y < y0) y0 = y;
+              if (y > y1) y1 = y;
+            }
+          }
+        }
+        if (x1 < 0) return;
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+        if (cw >= W - 2 && ch >= H - 2) return; // nothing to trim
+        const t = document.createElement('canvas');
+        t.width = cw; t.height = ch;
+        t.getContext('2d').drawImage(c, x0, y0, cw, ch, 0, 0, cw, ch);
+        if (!cancelled) setOut(t.toDataURL('image/png'));
+      } catch (e) {
+        /* tainted canvas or decode problem: keep original */
+      }
+    };
+    img.src = src;
+    return () => { cancelled = true; };
+  }, [src]);
+
+  return <img src={out} alt={alt} />;
+}
 
 const BODY_TYPES = ['article', 'intro_section', 'content_section', 'outcomes', 'market_focus', 'about_companies', 'media_contact'];
 
@@ -67,6 +119,78 @@ function buildSections(layouts) {
   return sections;
 }
 
+function formatInline(input) {
+  let out = input;
+  out = out
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  out = out.replace(
+    /(^|[\s(>])(https?:\/\/[^\s<)]+)/g,
+    (m, pre, url) => {
+      if (pre === '>') return m;
+      const trail = (url.match(/[.,;:!?]+$/) || [''])[0];
+      const clean = url.slice(0, url.length - trail.length);
+      return `${pre}<a href="${clean}" target="_blank" rel="noreferrer">${clean}</a>${trail}`;
+    }
+  );
+  return out;
+}
+
+// Content fields: works with HTML (WYSIWYG) OR plain text.
+// Plain-text shortcuts (no HTML tags needed):
+//   blank line        -> new paragraph
+//   ## Heading        -> sub-heading
+//   - item            -> bullet list (one "- " per line)
+//   **bold**          -> bold
+//   [text](https://x) -> link
+//   https://x         -> clickable link
+function formatRich(html) {
+  let out = (html || '').trim();
+  if (!out) return '';
+  if (!/<(p|ul|ol|h[1-6]|div|table|blockquote)[\s>]/i.test(out)) {
+    out = out
+      .split(/\n\s*\n/)
+      .map((para) => {
+        const txt = para.trim();
+        if (/^#{1,4}\s+/.test(txt)) return `<h3>${txt.replace(/^#{1,4}\s+/, '')}</h3>`;
+        // "- item" lines -> bullet list (mixed text + bullets in one block is fine)
+        if (/^[-•]\s+/m.test(txt)) {
+          const parts = [];
+          let list = [];
+          let text = [];
+          const flushText = () => { if (text.length) { parts.push(`<p>${text.join('<br />')}</p>`); text = []; } };
+          const flushList = () => { if (list.length) { parts.push(`<ul>${list.map((li) => `<li>${li}</li>`).join('')}</ul>`); list = []; } };
+          txt.split('\n').forEach((line) => {
+            const m = line.match(/^\s*[-•]\s+(.*)$/);
+            if (m) { flushText(); list.push(m[1]); }
+            else if (line.trim()) { flushList(); text.push(line.trim()); }
+          });
+          flushText(); flushList();
+          return parts.join('');
+        }
+        return `<p>${txt.replace(/\n/g, '<br />')}</p>`;
+      })
+      .join('');
+  }
+  out = formatInline(out);
+  return out;
+}
+
+// CTA title: highlight part of it in the orange gradient (like "Agentic AI?").
+// Wrap the words in *stars* in WordPress to choose them, e.g. Ready to explore *Agentic AI?*
+// If no stars are used, the last two words are highlighted automatically.
+function renderCtaTitle(title) {
+  const text = String(title || '').replace(/<\/?em>/gi, '*').trim();
+  if (!text) return null;
+  const m = text.match(/^(.*?)\*(.+?)\*(.*)$/);
+  if (m) {
+    return (<>{m[1]}<em>{m[2]}</em>{m[3]}</>);
+  }
+  const words = text.split(/\s+/);
+  if (words.length < 3) return text;
+  return (<>{words.slice(0, -2).join(' ')} <em>{words.slice(-2).join(' ')}</em></>);
+}
+
 export default function AtolioPartnershipClient({ data }) {
   const layouts = data?.acf?.atolio || [];
   const sections = buildSections(layouts);
@@ -74,8 +198,22 @@ export default function AtolioPartnershipClient({ data }) {
   const [openItem, setOpenItem] = useState('a0');
   const toggle = (key) => setOpenItem((prev) => (prev === key ? null : key));
 
-  const renderSpotlight = (spotlight) =>
-    spotlight && (
+  // Spotlight: if an image is set in the "Spotlight Image" field (blog pages) show
+  // the image on the right; otherwise show the dark card (press-release / recognition pages).
+  const renderSpotlight = (spotlight) => {
+    if (!spotlight) return null;
+    const spotImg =
+      typeof spotlight.spotlight_image === 'string'
+        ? { url: spotlight.spotlight_image }
+        : spotlight.spotlight_image;
+    if (spotImg?.url) {
+      return (
+        <aside className={s.spotlightImage}>
+          <img src={spotImg.url} alt={spotImg.alt || spotlight.spotlight_title || ''} />
+        </aside>
+      );
+    }
+    return (
       <aside className={s.spotlightCard}>
         <div>
           <h3>{spotlight.spotlight_title}</h3>
@@ -91,6 +229,7 @@ export default function AtolioPartnershipClient({ data }) {
         </div>
       </aside>
     );
+  };
 
   const renderHero = (hero, spotlight, key) => (
     <section key={key} className={s.hero}>
@@ -105,20 +244,18 @@ export default function AtolioPartnershipClient({ data }) {
 
             <div className={s.heroPartnerRow}>
               <div className={s.heroPartnerPill}>
-                <img
-                  src={hero.partner_1_logo?.url || '/assets/images/logo-front.webp'}
+                <TrimmedLogo
+                  src={hero.partner_1_logo_src || hero.partner_1_logo?.url || '/assets/images/logo-front.webp'}
                   alt="qBotica"
-                  style={{ height: 35, width: 'auto', objectFit: 'contain', flexShrink: 0 }}
                 />
               </div>
               {hero.partner_2_logo?.url && (
                 <>
                   <span className={s.heroX}>&times;</span>
                   <div className={s.heroPartnerPill}>
-                    <img
-                      src={hero.partner_2_logo.url}
+                    <TrimmedLogo
+                      src={hero.partner_2_logo_src || hero.partner_2_logo.url}
                       alt={hero.partner_2_logo.alt || 'Partner'}
-                      style={{ height: 35, width: 'auto', objectFit: 'contain', flexShrink: 0, transform: 'scale(1.4)' }}
                     />
                   </div>
                 </>
@@ -181,7 +318,7 @@ export default function AtolioPartnershipClient({ data }) {
                   <div className={s.accordionIcon}>+</div>
                 </button>
                 <div className={s.accordionContent}>
-                  <div dangerouslySetInnerHTML={{ __html: item.accordion_content }} />
+                  <div dangerouslySetInnerHTML={{ __html: formatRich(item.accordion_content) }} />
                   {item.accordion_link_url && (
                     <a href={item.accordion_link_url} target="_blank" rel="noreferrer" className={s.acLink}>
                       {item.accordion_link_text}
@@ -237,17 +374,32 @@ export default function AtolioPartnershipClient({ data }) {
       return (
         <Fragment key={idx}>
           <section className={`${s.articleSection} ${s.intro}`}>
-            <p>
-              <span className={s.dateline}>{block.article_dateline}</span>
-              {' '}&mdash; {block.intro_content}
-            </p>
-            <p>{block.intro_content2}</p>
+            {(() => {
+              const paras = String(block.intro_content || '').split(/\n\s*\n|\n/).map((x) => x.trim()).filter(Boolean);
+              const dateline = (block.article_dateline || '').replace(/[\s|]+$/, '');
+              return paras.map((para, pi) => (
+                <p key={pi}>
+                  {pi === 0 && dateline && (
+                    <>
+                      <span className={s.dateline}>{dateline}</span>
+                      {' '}&mdash;{' '}
+                    </>
+                  )}
+                  <span dangerouslySetInnerHTML={{ __html: formatInline(para) }} />
+                </p>
+              ));
+            })()}
+            {block.intro_content2 && String(block.intro_content2).split(/\n\s*\n|\n/).map((x) => x.trim()).filter(Boolean).map((para, pi) => (
+              <p key={`b${pi}`} dangerouslySetInnerHTML={{ __html: formatInline(para) }} />
+            ))}
           </section>
 
-          <section
-            className={`${s.articleSection} ${s.techSection}`}
-            dangerouslySetInnerHTML={{ __html: block.tech_section_content }}
-          />
+          {block.tech_section_content && block.tech_section_content.trim() && (
+            <section
+              className={`${s.articleSection} ${s.techSection}`}
+              dangerouslySetInnerHTML={{ __html: formatRich(block.tech_section_content) }}
+            />
+          )}
 
           {(block.quotes || []).map((q, i) => (
             <section key={i} className={`${s.articleSection} ${s.quote}`}>
@@ -268,19 +420,38 @@ export default function AtolioPartnershipClient({ data }) {
     }
 
     if (type === 'intro_section' || type === 'content_section') {
+      if (!block.section_content || !block.section_content.trim()) return null; // skip empty rows
       return (
         <section key={idx} className={s.articleSection}>
           {block.section_heading && <h2 className={s.sectionTitle}>{block.section_heading}</h2>}
-          {block.section_logo?.url && (
-            <div className={s.qubiLogoLink}>
+          {block.section_logo?.url && (() => {
+            const logoImg = (
               <img
                 src={block.section_logo.url}
                 alt={block.section_logo.alt || block.section_heading || ''}
                 className={s.qubiLogo}
               />
-            </div>
-          )}
-          <div dangerouslySetInnerHTML={{ __html: block.section_content }} />
+            );
+            // Link source (first match wins):
+            // 1) optional ACF field `section_logo_url`
+            // 2) the image's Media Library "Description" or "Caption" if it is a URL
+            const isUrl = (v) => typeof v === 'string' && /^https?:\/\//i.test(v.trim());
+            const fieldUrl =
+              typeof block.section_logo_url === 'string'
+                ? block.section_logo_url
+                : block.section_logo_url?.url || '';
+            const logoHref = [fieldUrl, block.section_logo.description, block.section_logo.caption]
+              .map((v) => (typeof v === 'string' ? v.trim() : ''))
+              .find(isUrl) || '';
+            return logoHref ? (
+              <a href={logoHref} target="_blank" rel="noreferrer" className={s.qubiLogoLink}>
+                {logoImg}
+              </a>
+            ) : (
+              <div className={s.qubiLogoLink}>{logoImg}</div>
+            );
+          })()}
+          <div className={s.sectionBody} dangerouslySetInnerHTML={{ __html: formatRich(block.section_content) }} />
         </section>
       );
     }
@@ -387,7 +558,7 @@ export default function AtolioPartnershipClient({ data }) {
   const renderCta = (c, key) => (
     <section key={key} className={s.cta}>
       <div className={s.ctaInner}>
-        <h2>{c.cta_title}</h2>
+        <h2>{renderCtaTitle(c.cta_title)}</h2>
         <p>{c.cta_description}</p>
         <div className={s.ctaActions}>
           <a href={c.cta_primary_url || '#'} target="_blank" rel="noreferrer" className={`${s.btn} ${s.btnPrimary}`}>

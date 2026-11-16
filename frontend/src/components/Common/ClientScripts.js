@@ -2,6 +2,14 @@
 
 import { useEffect } from 'react'
 
+// Scripts matching these are never injected (chatbot is disabled)
+const BLOCKED_SCRIPT_PATTERN = /chatbase/i
+
+const isBlockedScript = (el) =>
+  BLOCKED_SCRIPT_PATTERN.test(el.getAttribute('src') || '') ||
+  BLOCKED_SCRIPT_PATTERN.test(el.innerHTML || '') ||
+  BLOCKED_SCRIPT_PATTERN.test(el.id || '')
+
 export default function ClientScripts({ headerScript, footerScript }) {
   useEffect(() => {
     const addedScripts = []
@@ -18,6 +26,8 @@ export default function ClientScripts({ headerScript, footerScript }) {
         
         // Execute each script separately
         scriptElements.forEach((originalScript, index) => {
+          if (isBlockedScript(originalScript)) return
+
           const newScript = document.createElement('script')
           newScript.type = 'text/javascript'
           
@@ -54,6 +64,8 @@ export default function ClientScripts({ headerScript, footerScript }) {
         
         // Execute each script separately
         scriptElements.forEach((originalScript, index) => {
+          if (isBlockedScript(originalScript)) return
+
           const newScript = document.createElement('script')
           newScript.type = 'text/javascript'
           
@@ -78,8 +90,22 @@ export default function ClientScripts({ headerScript, footerScript }) {
       }
     }
 
+    // Safety net: remove any Chatbase script/element that gets added to the page by any means
+    const purgeChatbase = () => {
+      document
+        .querySelectorAll('script[src*="chatbase"], iframe[src*="chatbase"], [id^="chatbase-"], [data-cb-notif-list]')
+        .forEach(el => el.remove())
+      if (window.chatbase) {
+        try { delete window.chatbase } catch (e) { window.chatbase = undefined }
+      }
+    }
+    purgeChatbase()
+    const observer = new MutationObserver(purgeChatbase)
+    observer.observe(document.documentElement, { childList: true, subtree: true })
+
     // Cleanup function
     return () => {
+      observer.disconnect()
       addedScripts.forEach(script => {
         if (script && script.parentNode) {
           script.parentNode.removeChild(script)
