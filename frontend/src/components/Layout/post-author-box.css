@@ -26,6 +26,8 @@
 }
 .post-author-box .author-label {
   margin: 0 0 2px;
+  padding: 0;
+  line-height: 1.4;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .08em;
@@ -34,17 +36,23 @@
 }
 .post-author-box .author-name {
   margin: 0;
+  padding: 0;
+  line-height: 1.3;
   font-size: 20px;
   font-weight: 700;
   color: #171717;
 }
 .post-author-box .author-designation {
   margin: 2px 0 0;
+  padding: 0;
+  line-height: 1.4;
   font-size: 14px;
   color: #666;
 }
 .post-author-box .author-about-label {
   margin: 14px 0 0;
+  padding: 0;
+  line-height: 1.4;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -53,6 +61,8 @@
 }
 .post-author-box .author-bio {
   margin: 4px 0 0;
+  padding: 0;
+  text-align: left;
   font-size: 15px;
   line-height: 1.6;
   color: #333;
