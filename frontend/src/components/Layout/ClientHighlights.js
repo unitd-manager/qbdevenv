@@ -21,7 +21,7 @@ export default function ClientHighlights() {
             <div className={styles.videoLabel}>
               <div className={styles.videoLabelLeft}>
                 <img
-                  src="https://qbwpadmin.unitdtechnologies.com/wp-content/uploads/2025/09/polaris.webp"
+                  src="/assets/images/polaris-logo.jpg"
                   alt="Polaris"
                   className={styles.clientLogo}
                 />
@@ -50,8 +50,8 @@ export default function ClientHighlights() {
           </div>
 
           <div className={styles.clientCtas}>
-            <Link className={styles.buttonPrimary} href="/case-studies/how-qbotica-helped-a-transportation-supply-chain-company-scale-to-500-documents-processed-daily-with-ai">Explore the case study →</Link>
-            <Link className={styles.buttonPrimary} href="/case-studies">Explore more case studies →</Link>
+            <Link className={styles.buttonPrimary} href="/customer-success-stories/polaris-transportation-processing-500-quatation-documents-per-day-with-doqumentai">Explore the case study →</Link>
+            <Link className={styles.buttonPrimary} href="/customer-success-stories">Explore more case studies →</Link>
           </div>
         </div>
       </div>

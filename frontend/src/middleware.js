@@ -101,6 +101,7 @@ export async function middleware(request) {
     const cleanPath = pathname.replace(/\/$/, '') || '/';
     const destination = allRedirects[cleanPath];
 
+
     if (destination) {
         console.log(`🔀 Redirecting: ${pathname} → ${destination}`);
         return NextResponse.redirect(new URL(destination, request.url), 301);

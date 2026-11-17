@@ -1484,7 +1484,6 @@
     white-space: inherit;
 }
 
-.primary-menu .dropdown-mega:hover .dropdown-menu .col-md-4:not(:last-child)::after,
 .primary-menu .dropdown-mega .dropdown-menu.show .col-md-4:not(:last-child)::after {
     transform: scaleY(1);
     opacity: 1;
@@ -1543,14 +1542,12 @@
     transition: transform 5.6s ease, opacity 5.4s ease;
 }
 
-.dropdown-mega.show .dropdown-menu::before,
-.dropdown-mega:hover .dropdown-menu::before {
+.dropdown-mega .dropdown-menu.show::before {
     transform: scaleX(1);
     opacity: 1;
 }
 
-.dropdown-mega.show .dropdown-menu::after,
-.dropdown-mega:hover .dropdown-menu::after {
+.dropdown-mega .dropdown-menu.show::after {
     transform: scaleY(1);
     opacity: 1;
 }

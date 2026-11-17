@@ -84,6 +84,11 @@ function isMenuItemActive(item, currentPath, checkChildren = true) {
     cleanCurrentPath = cleanCurrentPath.slice(0, -1);
   }
 
+  // Home page: no nav item (e.g. Services) should be highlighted.
+  if (cleanCurrentPath === '/' || cleanCurrentPath === '') {
+    return false;
+  }
+
   if (cleanCurrentPath === '/new-home-static' || cleanCurrentPath.startsWith('/new-home-static/')) {
     return false;
   }
