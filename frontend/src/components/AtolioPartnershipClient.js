@@ -231,8 +231,24 @@ export default function AtolioPartnershipClient({ data }) {
     );
   };
 
-  const renderHero = (hero, spotlight, key) => (
-    <section key={key} className={s.hero}>
+  const renderHero = (hero, spotlight, key) => {
+    const heroImg =
+      typeof spotlight?.spotlight_image === 'string'
+        ? { url: spotlight.spotlight_image }
+        : spotlight?.spotlight_image;
+    const hasImg = !!heroImg?.url;
+    return (
+    <section key={key} className={`${s.hero} ${hasImg ? s.heroHasImage : ''}`}>
+      {hasImg && (
+        <div
+          className={s.heroBgImage}
+          style={{ backgroundImage: `linear-gradient(rgba(11,17,32,.62), rgba(11,17,32,.62)), url("${heroImg.url}")` }}
+          role="img"
+          aria-label={heroImg.alt || hero?.hero_headline || ''}
+        >
+          <div className={s.heroBgFull} style={{ backgroundImage: `url("${heroImg.url}")` }} />
+        </div>
+      )}
       <div className={s.heroInner}>
         {hero ? (
           <div>
@@ -276,10 +292,11 @@ export default function AtolioPartnershipClient({ data }) {
         ) : (
           <div />
         )}
-        {renderSpotlight(spotlight)}
+        {!hasImg && renderSpotlight(spotlight)}
       </div>
     </section>
-  );
+    );
+  };
 
   const renderPressMeta = (m, key) => (
     <section key={key} className={s.pressMeta}>

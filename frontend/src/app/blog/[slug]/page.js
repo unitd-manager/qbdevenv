@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { ArrowRight } from '@/components/Common/Icons';
 import StructuredData from '@/components/Common/StructuredData';
 import { notFound } from 'next/navigation';
-import { getAuthorProfile } from '@/lib/author';
+import AtolioPartnershipClient from '@/components/AtolioPartnershipClient';
+import { fetchAtolioPost, attachTrimmedLogos } from '@/lib/atolio-logos';
 
 const parent_path = '';
 
@@ -22,6 +23,26 @@ export async function generateMetadata({ params }) {
 export default async function SingleBlogPage({ params }) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
+
+  // Blog post built with the Atolio flexible layouts -> Atolio design
+  const atolioPost = await fetchAtolioPost(slug);
+  if (atolioPost) {
+    await attachTrimmedLogos(atolioPost);
+    let atolioStructuredData = null;
+    try {
+      const atolioMetadata = await generatePageMetadatas(slug, 'post', parent_path, {});
+      atolioStructuredData = getStructuredData(atolioMetadata);
+    } catch (error) {
+      console.error('Atolio blog structured data error:', error);
+    }
+    return (
+      <main>
+        {atolioStructuredData && <StructuredData data={atolioStructuredData} />}
+        <AtolioPartnershipClient data={atolioPost} />
+      </main>
+    );
+  }
+
   let page_data = await fetchPostBySlug(slug);
   let pageType = 'post';
   if (!page_data || !page_data?.id) {
@@ -45,8 +66,6 @@ export default async function SingleBlogPage({ params }) {
     excerpt_content: page_data?.excerpt?.rendered || '',
     title: page_data?.title?.rendered || '',
     date: page_data?.date || '',
-    author: page_data?._embedded?.author?.[0]?.name || '',
-    authorProfile: getAuthorProfile(page_data),
     categories: categories
       .filter(cat => (page_data?.categories || []).includes(cat.id))
       .map(cat => cat.name),
