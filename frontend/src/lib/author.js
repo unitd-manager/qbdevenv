@@ -2,6 +2,14 @@
 // Photo comes from an ACF user image field "author_photo" (object or URL);
 // the Gravatar placeholder is deliberately ignored. Bio is the WP user's
 // "Biographical Info"; designation is the optional ACF user field "author_designation".
+// ACF field is plain Text, so editors may omit the protocol; without it the
+// browser would treat "linkedin.com/in/x" as a relative link on our own site.
+function normalizeUrl(value) {
+  const url = typeof value === 'string' ? value.trim() : '';
+  if (!url) return '';
+  return /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, '')}`;
+}
+
 export function getAuthorProfile(post) {
   const author = post?._embedded?.author?.[0];
   if (!author?.name) return null;
@@ -23,7 +31,7 @@ export function getAuthorProfile(post) {
     name: author.name,
     bio: author.description || '',
     designation: author.acf?.author_designation || '',
-    linkedin: author.acf?.author_linkedin || '',
+    linkedin: normalizeUrl(author.acf?.author_linkedin),
     photo: photoUrl,
   };
 }

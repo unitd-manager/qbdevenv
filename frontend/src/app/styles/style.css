@@ -5720,9 +5720,15 @@ header.navbar .primary-btn:hover,
   padding: 0px;
 }
 
+.single-post-page .main-content-area {
+  flex: 1;
+  min-width: 0;
+}
+
 .single-post-page .sidebar-area {
   max-width: 365px;
   width: 100%;
+  flex-shrink: 0;
   position: sticky;
   top: 70px;
   align-self: start;
