@@ -246,6 +246,7 @@ export default function AtolioPartnershipClient({ data }) {
           role="img"
           aria-label={heroImg.alt || hero?.hero_headline || ''}
         >
+          <div className={s.heroBgBlur} style={{ backgroundImage: `url("${heroImg.url}")` }} />
           <div className={s.heroBgFull} style={{ backgroundImage: `url("${heroImg.url}")` }} />
         </div>
       )}

@@ -480,50 +480,37 @@
 }
 
 
-/* HERO IMAGE - Replace blue background completely */
-
+/* HERO IMAGE - picture covers the whole hero, white diagonal panel on the left */
 .heroHasImage {
   position: relative;
   background: var(--white);
   padding: 56px 5.5%;
-  min-height: min(56.25vw, 860px);
+  min-height: min(56.25vw, 880px);   /* 16:9, same as the thumbnail, so almost nothing is cropped top/bottom */
   display: flex;
   align-items: center;
   overflow: hidden;
 }
-
 .heroHasImage::before,
-.heroHasImage::after {
-  display: none;
-}
+.heroHasImage::after { display: none; }
 
-/* Image occupies the entire right blue section */
+/* The picture fills the whole hero; clip-path leaves the white diagonal on the left */
 .heroBgImage {
   position: absolute;
   inset: 0;
   z-index: 1;
   overflow: hidden;
-
-  clip-path: polygon(
-    62% 0,
-    100% 0,
-    100% 100%,
-    41% 100%
-  );
+  background-image: none !important;
+  clip-path: polygon(56% 0, 100% 0, 100% 100%, 35% 100%);
 }
-
-/* Actual image fills the entire blue area */
 .heroBgFull {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
 }
+.heroBgBlur { display: none; }     /* not needed in this layout */
 
-/* Keep content above background */
 .heroHasImage .heroInner {
   position: relative;
   z-index: 2;
@@ -532,26 +519,14 @@
   margin: 0;
   width: 100%;
 }
+.heroHasImage .heroInner > div:first-child { max-width: 38vw; }
+.heroHasImage .heroSummary { max-width: 32vw; }
+.heroHasImage .metaRow { max-width: 30vw; }
 
-.heroHasImage .heroInner > div:first-child {
-  max-width: 43vw;
-}
 
 /* Responsive */
 @media (max-width: 1080px) {
-  .heroHasImage {
-    display: block;
-    min-height: 0;
-    padding: 52px 5% calc(56.25vw + 32px);
-  }
-
-  .heroBgImage {
-    clip-path: none;
-    inset: auto 0 0;
-    height: 56.25vw;
-  }
-
-  .heroHasImage .heroInner > div:first-child {
-    max-width: none;
-  }
+  .heroHasImage { display: block; min-height: 0; padding: 52px 5% calc(56.25vw + 32px); }
+  .heroBgImage { clip-path: none; inset: auto 0 0; height: 56.25vw; }
+  .heroHasImage .heroInner > div:first-child { max-width: none; }
 }

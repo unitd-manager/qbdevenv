@@ -17,7 +17,6 @@ import AwardsRecognition from '@/components/Layout/AwardsRecognition';
 import LatestFromQbotica from '@/components/Layout/LatestFromQbotica';
 import FinalCTASection from '@/components/Layout/FinalCTASection';
 import TimelineSections from '@/components/Layout/timeline-sections';
-import UpcomingEventPopup from '@/components/Layout/UpcomingEventPopup';
 
 export const metadata = {
   title: 'New Home',
@@ -1058,9 +1057,6 @@ export default function NewHomeStaticPage() {
  </div>
  
  </DivTag>
-
-      <UpcomingEventPopup />
     </DivTag>
   );
 }
-
